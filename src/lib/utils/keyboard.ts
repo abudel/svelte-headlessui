@@ -18,4 +18,6 @@ export enum Keys {
   PageDown = "PageDown",
 
   Tab = "Tab",
+
+  Delete = "Delete",
 }

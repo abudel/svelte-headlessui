@@ -4,6 +4,7 @@ import {
   assertActiveElement,
   assertSwitch,
   getSwitch,
+  getByText,
   getSwitchLabel,
   SwitchState,
 } from "$lib/test-utils/accessibility-assertions";
@@ -21,25 +22,25 @@ describe("Safe guards", () => {
 });
 
 describe("Rendering", () => {
-  it('(on) Switch should have a slot prop', () => {
+  it("(on) Switch should have a slot prop", () => {
     render(svelte`
       <Switch checked={true} on:change={console.log} let:checked>
         <span>{checked ? 'On' : 'Off'}</span>
       </Switch>
-    `)
+    `);
 
-    assertSwitch({ state: SwitchState.On, textContent: 'On' })
-  })
+    assertSwitch({ state: SwitchState.On, textContent: "On" });
+  });
 
-  it('(off) Switch should have a slot prop', () => {
+  it("(off) Switch should have a slot prop", () => {
     render(svelte`
       <Switch checked={false} on:change={console.log} let:checked>
         <span>{checked ? 'On' : 'Off'}</span>
       </Switch>
-    `)
+    `);
 
-    assertSwitch({ state: SwitchState.Off, textContent: 'Off' })
-  })
+    assertSwitch({ state: SwitchState.Off, textContent: "Off" });
+  });
 
   it("should be possible to render an (on) Switch using an `as` prop", () => {
     render(svelte`
@@ -60,7 +61,7 @@ describe("Rendering", () => {
       <Switch checked={false} on:change={console.log}>
         <span>Enable notifications</span>
       </Switch>
-    `)
+    `);
     assertSwitch({ state: SwitchState.Off, label: "Enable notifications" });
   });
 
@@ -232,7 +233,7 @@ describe("Keyboard interactions", () => {
           <Switch checked={false} on:change={console.log} />
           <button id="btn">Other element</button>
         </div>
-      `)
+      `);
 
       // Ensure checkbox is off
       assertSwitch({ state: SwitchState.Off });
@@ -320,5 +321,110 @@ describe("Mouse interactions", () => {
 
     // Ensure state is still off
     assertSwitch({ state: SwitchState.Off });
+  });
+});
+describe("`Enter`", () => {
+  it("should submit the form on `Enter`", async () => {
+    let submitFn = jest.fn();
+
+    render(svelte`
+      <script>
+        let enabled = false
+      </script>         
+      <form on:submit={(event) => {
+        event.preventDefault()
+        submitFn([...new FormData(event.currentTarget).entries()])
+      }}>        
+        <Switch name="notifications" checked={enabled} on:change={(e) => (enabled = e.detail)}>Enable notifications</Switch>
+        <button type="submit">Submit</button>
+      </form>
+    `);
+
+    // Submit the form
+    await click(getByText("Submit"));
+
+    // Verify that the form has been submitted
+    expect(submitFn).lastCalledWith([]); // no data
+
+    // Toggle
+    await click(getSwitch());
+
+    // Submit the form again
+    await click(getByText("Submit"));
+
+    // Verify that the form has been submitted
+    expect(submitFn).lastCalledWith([["notifications", "on"]]);
+  });
+});
+
+describe("Form compatibility", () => {
+  it("should be possible to submit a form with an boolean value", async () => {
+    let submitFn = jest.fn();
+
+    render(svelte`
+      <script>
+        let enabled = false
+      </script>         
+      <form on:submit={(event) => {
+        event.preventDefault()
+        submitFn([...new FormData(event.currentTarget).entries()])
+      }}>        
+        <SwitchGroup>
+          <Switch name="notifications" checked={enabled} on:change={(e) => (enabled = e.detail)} />
+          <SwitchLabel>Enable notifications</SwitchLabel>
+        </SwitchGroup>        
+        <button type="submit">Submit</button>
+      </form>
+    `);
+
+    // Submit the form
+    await click(getByText("Submit"));
+
+    // Verify that the form has been submitted
+    expect(submitFn).lastCalledWith([]); // no data
+
+    // Toggle
+    await click(getSwitchLabel());
+
+    // Submit the form again
+    await click(getByText("Submit"));
+
+    // Verify that the form has been submitted
+    expect(submitFn).lastCalledWith([["notifications", "on"]]);
+  });
+
+  it("should be possible to submit a form with a provided string value", async () => {
+    let submitFn = jest.fn();
+
+    render(svelte`
+      <script>
+        let enabled = false
+      </script>         
+      <form on:submit={(event) => {
+        event.preventDefault()
+        submitFn([...new FormData(event.currentTarget).entries()])
+      }}>        
+        <SwitchGroup>
+          <Switch name="fruit" checked={enabled} value="apple" on:change={(e) => (enabled = e.detail)} />
+          <SwitchLabel>Apple</SwitchLabel>
+        </SwitchGroup>        
+        <button type="submit">Submit</button>
+      </form>
+    `);
+
+    // Submit the form
+    await click(getByText("Submit"));
+
+    // Verify that the form has been submitted
+    expect(submitFn).lastCalledWith([]); // no data
+
+    // Toggle
+    await click(getSwitchLabel());
+
+    // Submit the form again
+    await click(getByText("Submit"));
+
+    // Verify that the form has been submitted
+    expect(submitFn).lastCalledWith([["fruit", "apple"]]);
   });
 });
