@@ -13,10 +13,14 @@
   "bugs": {
     "url": "https://github.com/rgossiaux/svelte-headlessui/issues"
   },
+  "exports": {
+    ".": "./package/"
+  },
   "license": "MIT",
   "repository": "github:rgossiaux/svelte-headlessui",
   "version": "1.0.2",
   "scripts": {
+    "postinstall": "svelte-package && find package/ -type f -exec sed -i '' -e 's/process.env.NODE_ENV/\"production\"/' {} \\;",
     "dev": "svelte-kit dev",
     "build": "svelte-kit build",
     "package": "svelte-package && find package/ -type f -exec sed -i '' -e 's/process.env.NODE_ENV/\"production\"/' {} \\;",
